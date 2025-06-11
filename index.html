@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detect Homoglyphs & Hidden Unicode Characters</title>
+<style type="text/css">
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #1f1f1f;
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+        color: #e8e8e8;
+    }
+
+    div.main {
+        background: #2d2d2d;
+        border-radius: 16px;
+        border: 1px solid #4d4d4d;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        padding: 2.4em 3em;
+        margin: 0 auto;
+        max-width: 1000px;
+    }
+
+    div.output {
+        margin: 3em 0;
+        border: 1px solid #4d4d4d;
+        border-radius: 8px;
+        padding: 1em;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        cursor: default;
+        background: #232323;
+        line-height: 1.6;
+    }
+
+    /* Character styling */
+
+    div.output span.symbol,
+    div.output span.hex,
+    div.output span.white,
+    div.output span.non-typable {
+        border-radius: 4px;
+        margin: 0 2px;
+        padding: 2px 6px;
+        transition-property: background, color, padding;
+        transition-duration: 0.3s;
+        transition-timing-function: ease-in-out;
+    }
+
+    div.output span.typable {
+        border-radius: 4px;
+        transition-property: background, color, padding;
+        transition-duration: 0.3s;
+        transition-timing-function: ease-in-out;
+    }
+
+    div.output span.symbol {
+        color: #2a2a2a;
+        background: #8b898b;
+    }
+
+    div.output span.hex {
+        color: #2a2a2a;
+        background: #bae1ff;
+    }
+
+    div.output span.white {
+        color: #2a2a2a;
+        background: #8b898b;
+    }
+
+    div.output span.non-typable {
+        color: #2a2a2a;
+        background: #ece5bf;
+    }
+
+    div.output span.typable {
+        color: #e8e8e8;
+    }
+
+    div.output span.symbol:hover,
+    div.output span.hex:hover,
+    div.output span.white:hover,
+    div.output span.non-typable:hover,
+    div.output span.typable:hover {
+        background: #ff8f8f;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        color: #2a2a2a;
+    }
+
+    /* Tooltip styling */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%) translateY(10px);
+        padding: 8px 12px;
+        color: #e8e8e8;
+        background: rgba(65, 60, 60, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid #838383;
+        border-radius: 8px;
+        font-weight: 500;
+        text-align: center;
+        z-index: 1000;
+        white-space: nowrap;
+        font-size: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+    }
+
+    div.output span.symbol:hover ~ .tooltiptext,
+    div.output span.hex:hover ~ .tooltiptext,
+    div.output span.white:hover ~ .tooltiptext,
+    div.output span.non-typable:hover ~ .tooltiptext,
+    div.output span.typable:hover ~ .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* Form styling */
+    textarea {
+        border: 1px solid #4d4d4d;
+        border-radius: 8px;
+        padding: 12px;
+        background: #252525;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        resize: vertical;
+        color: #e8e8e8;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    textarea:focus {
+        outline: none;
+        box-shadow: 0 0 5px #5447ca;
+        border-color: #a5b5d4;
+    }
+
+    textarea::placeholder {
+        color: #a0a0a0;
+    }
+
+    /* Stats styling */
+    #stats {
+        color: #b5b5b5;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 12px;
+        background: #373737;
+        border-radius: 8px;
+        border: 1px solid #4d4d4d;
+        margin: -2.5em 0 4em 0;
+    }
+
+    /* Headings */
+    h1 {
+        color: #f5f5f5;
+        font-weight: 600;
+        margin-bottom: 0.5em;
+    }
+
+    h2 {
+        color: #e0e0e0;
+        font-weight: 600;
+        margin-top: 2em;
+    }
+
+    /* Links */
+    a {
+        color: #818cf8;
+        text-decoration: none;
+    }
+
+    a:hover {
+        color: #a5b4fc;
+        text-decoration: underline;
+    }
+
+    /* List styling */
+    ul {
+        padding-left: 1.5em;
+    }
+
+    li {
+        margin-bottom: 0.5em;
+        color: #e0e0e0;
+    }
+
+    p {
+        color: #e0e0e0;
+        line-height: 1.6;
+    }
+</style>
+</head>
+<body>
+
+<div class="main">
+    <h1>Detect Homoglyphs & Hidden Unicode Characters</h1>
+    <p>Online tool to display <a href="https://maxhalford.github.io/blog/homoglyphs/" target="_blank">homoglyph</a> and non-printable characters that may be hidden in copy &amp; pasted strings.</p>
+
+    <div style="margin-top: 3em;">
+        Please paste the string here:
+    </div>
+    <div>
+        <textarea id="inputText" rows="8" cols="40" dir="auto">Letter Α and A aren&#39;t the same.
+These whitespace characters differ in Unicode.
+The word be​e contains 4 characters.
+The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes and represents 5 distinct Unicode codepoints.</textarea>
+    </div>
+
+    <div id="output"></div>
+    <div id="stats"></div>
+
+    <h2>Helpful Sites for Details on UTF Characters</h2>
+    <ul>
+        <li><a href="https://www.mclean.net.nz/ucf/" target="_blank">&lt;mclean.net.nz&gt; Unicode Character Finder</a></li>
+        <li><a href="https://r12a.github.io/app-conversion/" target="_blank">&lt;r12a.github.io&gt; Unicode Converter</a></li>
+        <li><a href="https://poppycocker.github.io/UnicodeFinder/" target="_blank">&lt;poppycocker.github.io&gt; Unicode Character Finder</a></li>
+        <li><a href="https://www.branah.com/unicode-converter" target="_blank">&lt;branah.com&gt; Unicode Converter</a></li>
+        <li><a href="http://www.fileformat.info/info/unicode/char/search.htm" target="_blank">&lt;fileformat.Info&gt; Unicode Character Search</a></li>
+        <li><a href="http://utf8-chartable.de/unicode-utf8-table.pl" target="_blank">&lt;utf8-chartable.de&gt; UTF-8 Encoding Table & Unicode Characters</a></li>
+    </ul>
+
+    <h2>Privacy Notice</h2>
+    <p>Your privacy is fully protected on this site. All text is processed locally in your browser and never leaves your device. No personal information is collected, no data is stored and no cookies or tracking tools are used.</p>
+
+    <h2>Source Code</h2>
+<p>
+  This site is a fork of the original tool from <a href="https://github.com/BurninLeo/see-non-printable-characters">soscisurvey.de</a>. The source code is available on <a href="https://github.com/0Ky/see-non-printable-characters">GitHub</a>.
+</p>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const textarea = document.getElementById('inputText');
+        const output = document.getElementById('output');
+        const stats = document.getElementById('stats');
+
+        // Define all characters typable directly on a US QWERTY keyboard (except space,tab,newline):
+        // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()-_=+[{]}\|;:'",<.>/?
+        const US_KEYBOARD_TYPABLE = /^[\x21-\x7E]$/;
+
+        function getCharCode(char) {
+            return char.codePointAt(0);
+        }
+
+        function getByteLength(str) {
+            return new TextEncoder().encode(str).length;
+        }
+
+        function isTypableOnUSKeyboard(char) {
+            return US_KEYBOARD_TYPABLE.test(char);
+        }
+
+        function createTooltip(char, symbol) {
+            const code = getCharCode(char);
+            const utf8Bytes = new TextEncoder().encode(char);
+            const utf8Hex = Array.from(utf8Bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+            const codepoint = `U+${code.toString(16).padStart(4, '0').toUpperCase()}`;
+
+            const desc = `UTF-8: ${utf8Hex}<br>codepoint: ${codepoint}`;
+
+            return `<span class="tooltip">${symbol}<span class="tooltiptext">${desc}</span></span>`;
+        }
+
+        function processChar(char) {
+            const code = getCharCode(char);
+            const hex = `U+${code.toString(16).toUpperCase().padStart(4, '0')}`;
+
+
+            if (char === '\r') {
+                return createTooltip(char, '<span class="symbol">CR</span>');
+            } else if (char === '\n') {
+                return createTooltip(char, '<span class="symbol">LF</span>');
+            } else if (char === '\t') {
+                return createTooltip(char, '<span class="symbol">⟶</span>') + '&#8203;';
+            } else if (char === ' ') {
+                return createTooltip(char, '<span class="white">·</span>') + '&#8203;';
+            } else if (!/^[\p{L}\p{M}\p{N}\p{P}\p{S}]$/u.test(char)) {
+                return createTooltip(char, `<span class="hex">${hex}</span>`);
+            } else if (!isTypableOnUSKeyboard(char)) {
+                return createTooltip(char, `<span class="non-typable">${hex}</span>`);
+            } else {
+                return createTooltip(char, `<span class="typable">${char}</span>`);
+            }
+        }
+
+        function convertTextToHtml(text) {
+            let html = '<div class="output" dir="auto">';
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '\n') {
+                    html += processChar(char) + '</br>';
+                } else {
+                    html += processChar(char);
+                }
+            }
+            return html + '</div>';
+        }
+
+        function updateDisplay() {
+            const text = textarea.value;
+            const html = convertTextToHtml(text);
+            const charCount = text.length;
+            const byteCount = getByteLength(text);
+
+            output.innerHTML = html;
+            stats.textContent = `${charCount} characters, ${byteCount} bytes`;
+        }
+
+        textarea.addEventListener('input', updateDisplay);
+        updateDisplay();
+    });
+</script>
+</body>
+</html>
