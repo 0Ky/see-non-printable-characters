@@ -45,14 +45,7 @@
         margin: 0 2px;
         padding: 2px 6px;
         transition-property: background, color, padding;
-        transition-duration: 0.3s;
-        transition-timing-function: ease-in-out;
-    }
-
-    div.output span.typable {
-        border-radius: 4px;
-        transition-property: background, color, padding;
-        transition-duration: 0.3s;
+        transition-duration: 0.25s;
         transition-timing-function: ease-in-out;
     }
 
@@ -73,11 +66,19 @@
 
     div.output span.non-typable {
         color: #2a2a2a;
-        background: #ece5bf;
+        background: #e8a966;
     }
 
     div.output span.typable {
+        border-radius: 4px;
+        transition-property: background, color, padding;
+        transition-duration: 0.25s;
+        transition-timing-function: ease-in-out;
+        white-space: pre;
+        padding-top: 2px;
+        padding-bottom: 2px;
         color: #e8e8e8;
+        /* font-family:'Courier New', Courier, monospace; */
     }
 
     div.output span.symbol:hover,
@@ -86,8 +87,6 @@
     div.output span.non-typable:hover,
     div.output span.typable:hover {
         background: #ff8f8f;
-        padding-top: 2px;
-        padding-bottom: 2px;
         color: #2a2a2a;
     }
 
@@ -98,26 +97,26 @@
     }
 
     .tooltip .tooltiptext {
-        visibility: hidden;
         opacity: 0;
         position: absolute;
-        bottom: 120%;
         left: 50%;
         transform: translateX(-50%) translateY(10px);
-        padding: 8px 12px;
+        padding: 3px 9px;
         color: #e8e8e8;
-        background: rgba(65, 60, 60, 0.3);
+        background: rgba(124, 74, 74, 0.61);
         backdrop-filter: blur(10px);
-        border: 1px solid #838383;
+        border: 1px solid #e7b5b5;
         border-radius: 8px;
         font-weight: 500;
-        text-align: center;
+        text-align: left;
         z-index: 1000;
-        white-space: nowrap;
+        white-space: pre;
         font-size: 12px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.25s cubic-bezier(.65,.05,.36,1);
         pointer-events: none;
+        height: max-content;
+        bottom: 30px;
     }
 
     div.output span.symbol:hover ~ .tooltiptext,
@@ -125,9 +124,8 @@
     div.output span.white:hover ~ .tooltiptext,
     div.output span.non-typable:hover ~ .tooltiptext,
     div.output span.typable:hover ~ .tooltiptext {
-        visibility: visible;
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        bottom: 40px;
     }
 
     /* Form styling */
@@ -250,10 +248,6 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
         const output = document.getElementById('output');
         const stats = document.getElementById('stats');
 
-        // Define all characters typable directly on a US QWERTY keyboard (except space,tab,newline):
-        // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()-_=+[{]}\|;:'",<.>/?
-        const US_KEYBOARD_TYPABLE = /^[\x21-\x7E]$/;
-
         function getCharCode(char) {
             return char.codePointAt(0);
         }
@@ -263,6 +257,9 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
         }
 
         function isTypableOnUSKeyboard(char) {
+            // Define all characters typable directly on a US QWERTY keyboard (except tab and newline):
+            // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()-_=+[{]}\|;:'",<.>/?
+            const US_KEYBOARD_TYPABLE = /^[\x20-\x7E]$/;
             return US_KEYBOARD_TYPABLE.test(char);
         }
 
@@ -272,8 +269,7 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
             const utf8Hex = Array.from(utf8Bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
             const codepoint = `U+${code.toString(16).padStart(4, '0').toUpperCase()}`;
 
-            const desc = `UTF-8: ${utf8Hex}<br>codepoint: ${codepoint}`;
-
+            const desc = `${'UTF-8'.padStart(9)}: ${utf8Hex}\n${'Decimal'.padStart(9)}: ${code}\n${'Codepoint'}: ${codepoint}`;
             return `<span class="tooltip">${symbol}<span class="tooltiptext">${desc}</span></span>`;
         }
 
@@ -287,10 +283,10 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
             } else if (char === '\n') {
                 return createTooltip(char, '<span class="symbol">LF</span>');
             } else if (char === '\t') {
-                return createTooltip(char, '<span class="symbol">⟶</span>') + '&#8203;';
+                return createTooltip(char, '<span class="symbol">⟶</span>');
             } else if (char === ' ') {
-                return createTooltip(char, '<span class="white">·</span>') + '&#8203;';
-            } else if (!/^[\p{L}\p{M}\p{N}\p{P}\p{S}]$/u.test(char)) {
+                return createTooltip(char, '<span class="white">·</span>');
+            } else if (/^(?!\u0020)[\p{Z}]$/u.test(char)) { // all spaces, except for normal whitespace
                 return createTooltip(char, `<span class="hex">${hex}</span>`);
             } else if (!isTypableOnUSKeyboard(char)) {
                 return createTooltip(char, `<span class="non-typable">${hex}</span>`);
