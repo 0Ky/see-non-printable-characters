@@ -25,7 +25,7 @@
     }
 
     div.output {
-        margin: 3em 0;
+        margin: 1em 0;
         border: 1px solid #4d4d4d;
         border-radius: 8px;
         padding: 1em;
@@ -36,7 +36,6 @@
     }
 
     /* Character styling */
-
     div.output span.symbol,
     div.output span.hex,
     div.output span.white,
@@ -44,7 +43,7 @@
         border-radius: 4px;
         margin: 0 2px;
         padding: 2px 6px;
-        transition-property: background, color, padding;
+        transition-property: background, color, padding, opacity;
         transition-duration: 0.25s;
         transition-timing-function: ease-in-out;
     }
@@ -67,6 +66,9 @@
     div.output span.non-typable {
         color: #2a2a2a;
         background: #e8a966;
+        transition-property: background, color, padding, opacity;
+        transition-duration: 0.25s;
+        transition-timing-function: ease-in-out;
     }
 
     div.output span.typable {
@@ -78,7 +80,6 @@
         padding-top: 2px;
         padding-bottom: 2px;
         color: #e8e8e8;
-        /* font-family:'Courier New', Courier, monospace; */
     }
 
     div.output span.symbol:hover,
@@ -111,12 +112,13 @@
         text-align: left;
         z-index: 1000;
         white-space: pre;
-        font-size: 12px;
+        font-size: 14px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         transition: all 0.25s cubic-bezier(.65,.05,.36,1);
         pointer-events: none;
         height: max-content;
         bottom: 30px;
+        line-height: 1;
     }
 
     div.output span.symbol:hover ~ .tooltiptext,
@@ -151,6 +153,65 @@
         color: #a0a0a0;
     }
 
+    /* Controls styling */
+    .controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin: 1em 0;
+        padding: 12px;
+        background: #373737;
+        border-radius: 8px;
+        border: 1px solid #4d4d4d;
+        flex-wrap: wrap;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #818cf8;
+        flex: 0;
+
+    }
+
+    .checkbox-container label {
+        color: #e0e0e0;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .copy-button {
+        background: #5447ca;
+        color: #e8e8e8;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background 0.2s ease;
+        flex-shrink: 1;
+    }
+
+    .copy-button:hover {
+        background: #6366f1;
+    }
+
+    .copy-button:active {
+        background: #4338ca;
+    }
+
+    .copy-button.success {
+        background: #2c864f;
+    }
+
     /* Stats styling */
     #stats {
         color: #b5b5b5;
@@ -160,7 +221,7 @@
         background: #373737;
         border-radius: 8px;
         border: 1px solid #4d4d4d;
-        margin: -2.5em 0 4em 0;
+        margin: 1em 0;
     }
 
     /* Headings */
@@ -201,6 +262,12 @@
         color: #e0e0e0;
         line-height: 1.6;
     }
+
+    /* Grayed out styling for removed characters */
+    .removed {
+        opacity: 0.3;
+        text-decoration: line-through dotted;
+    }
 </style>
 </head>
 <body>
@@ -209,14 +276,19 @@
     <h1>Detect Homoglyphs & Hidden Unicode Characters</h1>
     <p>Online tool to display <a href="https://maxhalford.github.io/blog/homoglyphs/" target="_blank">homoglyph</a> and non-printable characters that may be hidden in copy &amp; pasted strings.</p>
 
-    <div style="margin-top: 3em;">
-        Please paste the string here:
-    </div>
     <div>
-        <textarea id="inputText" rows="8" cols="40" dir="auto">Letter Α and A aren&#39;t the same.
+        <textarea id="inputText" rows="8" cols="40" dir="auto" placeholder="Paste your text here...">Letter Α and A aren&#39;t the same.
 These whitespace characters differ in Unicode.
 The word be​e contains 4 characters.
 The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes and represents 5 distinct Unicode codepoints.</textarea>
+    </div>
+
+    <div class="controls">
+        <button id="copyButton" class="copy-button">Copy (Sanitized)</button>
+        <div class="checkbox-container">
+            <input type="checkbox" id="removeSpacesOnly" />
+            <label for="removeSpacesOnly">Remove only non-standard whitespace</label>
+        </div>
     </div>
 
     <div id="output"></div>
@@ -236,9 +308,8 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
     <p>Your privacy is fully protected on this site. All text is processed locally in your browser and never leaves your device. No personal information is collected, no data is stored and no cookies or tracking tools are used.</p>
 
     <h2>Source Code</h2>
-<p>
-  This site is a fork of the original tool from <a href="https://github.com/BurninLeo/see-non-printable-characters">soscisurvey.de</a>. The source code is available on <a href="https://github.com/0Ky/see-non-printable-characters">GitHub</a>.
-</p>
+
+    <p>This site is a fork of the original tool from <a href="https://github.com/BurninLeo/see-non-printable-characters">soscisurvey.de</a>. The source code is available on <a href="https://github.com/0Ky/see-non-printable-characters">GitHub</a>.</p>
 
 </div>
 
@@ -247,6 +318,8 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
         const textarea = document.getElementById('inputText');
         const output = document.getElementById('output');
         const stats = document.getElementById('stats');
+        const copyButton = document.getElementById('copyButton');
+        const removeSpacesOnlyCheckbox = document.getElementById('removeSpacesOnly');
 
         function getCharCode(char) {
             return char.codePointAt(0);
@@ -257,10 +330,14 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
         }
 
         function isTypableOnUSKeyboard(char) {
-            // Define all characters typable directly on a US QWERTY keyboard (except tab and newline):
-            // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()-_=+[{]}\|;:'",<.>/?
-            const US_KEYBOARD_TYPABLE = /^[\x20-\x7E]$/;
+            // includes tab, newline & carriage return
+            const US_KEYBOARD_TYPABLE = /^[\x09\x0A\x0D\x20-\x7E]$/;
             return US_KEYBOARD_TYPABLE.test(char);
+        }
+
+        function isHexSpaceChar(char) {
+            // Check if it's a Unicode space character (excluding normal space U+0020)
+            return /^(?!\u0020)[\p{Z}]$/u.test(char);
         }
 
         function createTooltip(char, symbol) {
@@ -277,7 +354,6 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
             const code = getCharCode(char);
             const hex = `U+${code.toString(16).toUpperCase().padStart(4, '0')}`;
 
-
             if (char === '\r') {
                 return createTooltip(char, '<span class="symbol">CR</span>');
             } else if (char === '\n') {
@@ -286,10 +362,11 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
                 return createTooltip(char, '<span class="symbol">⟶</span>');
             } else if (char === ' ') {
                 return createTooltip(char, '<span class="white">·</span>');
-            } else if (/^(?!\u0020)[\p{Z}]$/u.test(char)) { // all spaces, except for normal whitespace
-                return createTooltip(char, `<span class="hex">${hex}</span>`);
+            } else if (isHexSpaceChar(char)) {
+                return createTooltip(char, `<span class="hex removed">${hex}</span>`);
             } else if (!isTypableOnUSKeyboard(char)) {
-                return createTooltip(char, `<span class="non-typable">${hex}</span>`);
+                const nonTypableClass = removeSpacesOnlyCheckbox.checked ? "non-typable" : "non-typable removed";
+                return createTooltip(char, `<span class="${nonTypableClass}">${hex}</span>`);
             } else {
                 return createTooltip(char, `<span class="typable">${char}</span>`);
             }
@@ -308,17 +385,69 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
             return html + '</div>';
         }
 
-        function updateDisplay() {
+        function updateStats() {
             const text = textarea.value;
-            const html = convertTextToHtml(text);
+            const removeSpacesOnly = removeSpacesOnlyCheckbox.checked;
             const charCount = text.length;
             const byteCount = getByteLength(text);
 
+            const removedCount = document.querySelectorAll("#output span.removed").length
+
+            stats.textContent = `${charCount} characters, ${byteCount} bytes${removedCount > 0 ? ` (${removedCount} characters removed)` : ''}`;
+        }
+
+        function toggleRemoveSpaces() {
+            const removeSpacesOnly = removeSpacesOnlyCheckbox.checked;
+            const nonTypableChars = document.querySelectorAll("#output span.non-typable");
+            if (removeSpacesOnly) {
+                nonTypableChars.forEach(el => el.classList.remove("removed"));
+            } else {
+                nonTypableChars.forEach(el => el.classList.add("removed"));
+            }
+            updateStats();
+        }
+
+        function updateDisplay() {
+            const text = textarea.value;
+            const html = convertTextToHtml(text);
             output.innerHTML = html;
-            stats.textContent = `${charCount} characters, ${byteCount} bytes`;
+            updateStats();
+        }
+
+        async function copyToClipboard() {
+            const text = textarea.value;
+            const removeSpacesOnly = removeSpacesOnlyCheckbox.checked;
+
+            let cleanedText = '';
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+
+                // Always remove space characters (Unicode spaces except normal space)
+                if (isHexSpaceChar(char)) {
+                    continue;
+                }
+
+                // Also remove non-typable characters if checkbox unchecked
+                if (!removeSpacesOnly && !isTypableOnUSKeyboard(char)) {
+                    continue;
+                }
+
+                cleanedText += char;
+            }
+
+            await navigator.clipboard.writeText(cleanedText);
+            copyButton.textContent = 'Copied!';
+            copyButton.classList.add('success');
+            setTimeout(() => {
+                copyButton.textContent = 'Copy (Sanitized)';
+                copyButton.classList.remove('success');
+            }, 2000);
         }
 
         textarea.addEventListener('input', updateDisplay);
+        copyButton.addEventListener('click', copyToClipboard);
+        removeSpacesOnlyCheckbox.addEventListener('change',toggleRemoveSpaces);
+
         updateDisplay();
     });
 </script>
