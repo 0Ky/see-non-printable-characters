@@ -37,8 +37,8 @@
 
     /* Character styling */
     div.output span.symbol,
-    div.output span.hex,
-    div.output span.white,
+    div.output span.whitespace-all,
+    div.output span.whitespace,
     div.output span.non-typable {
         border-radius: 4px;
         margin: 0 2px;
@@ -53,12 +53,12 @@
         background: #8b898b;
     }
 
-    div.output span.hex {
+    div.output span.whitespace-all {
         color: #2a2a2a;
         background: #bae1ff;
     }
 
-    div.output span.white {
+    div.output span.whitespace {
         color: #2a2a2a;
         background: #8b898b;
     }
@@ -83,8 +83,8 @@
     }
 
     div.output span.symbol:hover,
-    div.output span.hex:hover,
-    div.output span.white:hover,
+    div.output span.whitespace-all:hover,
+    div.output span.whitespace:hover,
     div.output span.non-typable:hover,
     div.output span.typable:hover {
         background: #ff8f8f;
@@ -122,8 +122,8 @@
     }
 
     div.output span.symbol:hover ~ .tooltiptext,
-    div.output span.hex:hover ~ .tooltiptext,
-    div.output span.white:hover ~ .tooltiptext,
+    div.output span.whitespace-all:hover ~ .tooltiptext,
+    div.output span.whitespace:hover ~ .tooltiptext,
     div.output span.non-typable:hover ~ .tooltiptext,
     div.output span.typable:hover ~ .tooltiptext {
         opacity: 1;
@@ -335,9 +335,9 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
             return US_KEYBOARD_TYPABLE.test(char);
         }
 
-        function isHexSpaceChar(char) {
+        function isSpaceChar(char) {
             // Check if it's a Unicode space character (excluding normal space U+0020)
-            return /^(?!\u0020)[\p{Z}]$/u.test(char);
+            return /^(?!\u0020)[\p{Z}\p{Cf}]$/u.test(char);
         }
 
         function createTooltip(char, symbol) {
@@ -360,10 +360,10 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
                 return createTooltip(char, '<span class="symbol">LF</span>');
             } else if (char === '\t') {
                 return createTooltip(char, '<span class="symbol">⟶</span>');
-            } else if (char === ' ') {
-                return createTooltip(char, '<span class="white">·</span>');
-            } else if (isHexSpaceChar(char)) {
-                return createTooltip(char, `<span class="hex removed">${hex}</span>`);
+            } else if (char === '\u0020') {
+                return createTooltip(char, '<span class="whitespace">·</span>');
+            } else if (isSpaceChar(char)) {
+                return createTooltip(char, `<span class="whitespace-all removed">${hex}</span>`);
             } else if (!isTypableOnUSKeyboard(char)) {
                 const nonTypableClass = removeSpacesOnlyCheckbox.checked ? "non-typable" : "non-typable removed";
                 return createTooltip(char, `<span class="${nonTypableClass}">${hex}</span>`);
@@ -423,7 +423,7 @@ The emoji 🕵🏻‍♂️ is a multibyte character composed of 14 UTF-8 bytes 
                 const char = text[i];
 
                 // Always remove space characters (Unicode spaces except normal space)
-                if (isHexSpaceChar(char)) {
+                if (isSpaceChar(char)) {
                     continue;
                 }
 
